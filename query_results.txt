@@ -1,0 +1,198 @@
+
+==========================================================================================
+
+==========================================================================================
+SELECT DISTINCT payment_method
+FROM transactions
+WHERE status = 'captured' AND amount_inr > 2000
+ORDER BY payment_method
+LIMIT 5;
+------------------------------------------------------------------------------------------
+payment_method
+          Card
+    Netbanking
+           UPI
+        Wallet
+
+[4 row(s) returned]
+
+
+==========================================================================================
+
+==========================================================================================
+SELECT m.category,
+       SUM(t.amount_inr) AS total_captured_revenue,
+       COUNT(*)          AS captured_txn_count
+FROM transactions t
+INNER JOIN merchants m ON m.merchant_id = t.merchant_id
+WHERE t.status = 'captured'
+GROUP BY m.category
+HAVING SUM(t.amount_inr) > 50000
+ORDER BY total_captured_revenue DESC;
+------------------------------------------------------------------------------------------
+ category  total_captured_revenue  captured_txn_count
+   travel                   59759                  91
+  grocery                   59398                 102
+ecommerce                   58466                  84
+
+[3 row(s) returned]
+
+
+==========================================================================================
+
+==========================================================================================
+SELECT m.merchant_id,
+       m.merchant_name,
+       m.region,
+       COUNT(t.transaction_id) AS txn_count
+FROM merchants m
+LEFT JOIN transactions t ON t.merchant_id = m.merchant_id
+GROUP BY m.merchant_id, m.merchant_name, m.region
+ORDER BY txn_count ASC, m.merchant_id;
+------------------------------------------------------------------------------------------
+ merchant_id merchant_name region  txn_count
+           1  Merchant_001  South          9
+           4  Merchant_004   East          9
+          20  Merchant_020   East          9
+           2  Merchant_002   West         10
+          11  Merchant_011  North         10
+          23  Merchant_023  North         10
+          28  Merchant_028  South         10
+          38  Merchant_038   East         10
+           5  Merchant_005  South         11
+          18  Merchant_018   West         11
+          33  Merchant_033   East         11
+          13  Merchant_013   East         12
+          14  Merchant_014   East         12
+          15  Merchant_015  North         12
+          26  Merchant_026   East         12
+          12  Merchant_012   East         13
+          17  Merchant_017  North         13
+          24  Merchant_024  North         13
+          39  Merchant_039  North         13
+           6  Merchant_006  South         14
+          10  Merchant_010   West         14
+          19  Merchant_019  North         14
+          21  Merchant_021   East         14
+          32  Merchant_032   West         14
+          35  Merchant_035   East         14
+          31  Merchant_031   East         15
+          40  Merchant_040  South         15
+           7  Merchant_007   East         16
+           8  Merchant_008  North         16
+          22  Merchant_022  South         16
+          27  Merchant_027  North         16
+          34  Merchant_034  South         16
+          36  Merchant_036   East         16
+           3  Merchant_003   East         17
+          25  Merchant_025  South         17
+          30  Merchant_030   West         17
+           9  Merchant_009  North         18
+          29  Merchant_029  North         19
+          37  Merchant_037  South         19
+          16  Merchant_016   West         20
+
+[40 row(s) returned]
+
+
+==========================================================================================
+
+==========================================================================================
+SELECT COUNT(*)                       AS chargeback_txn_count,
+       COUNT(DISTINCT user_id)        AS unique_users_affected,
+       SUM(amount_inr)                AS total_chargeback_amount_inr
+FROM transactions
+WHERE status = 'chargeback';
+------------------------------------------------------------------------------------------
+ chargeback_txn_count  unique_users_affected  total_chargeback_amount_inr
+                   28                     27                        54472
+
+[1 row(s) returned]
+
+
+==========================================================================================
+
+==========================================================================================
+SELECT t.transaction_id,
+       t.user_id,
+       u.signup_date,
+       t.transaction_time,
+       CAST(julianday(t.transaction_time) - julianday(u.signup_date) AS INTEGER) AS account_age_days,
+       t.amount_inr
+FROM transactions t
+INNER JOIN users u ON u.user_id = t.user_id
+WHERE t.status = 'chargeback'
+  AND (julianday(t.transaction_time) - julianday(u.signup_date)) >= 0
+  AND (julianday(t.transaction_time) - julianday(u.signup_date)) < 30
+ORDER BY account_age_days ASC;
+------------------------------------------------------------------------------------------
+transaction_id  user_id         signup_date    transaction_time  account_age_days  amount_inr
+     TXN200006      357 2026-01-19 11:00:00 2026-01-23 11:00:00                 4        1999
+     TXN200008      359 2026-01-18 22:00:00 2026-01-25 22:00:00                 7        2999
+     TXN200010      361 2026-01-11 07:00:00 2026-01-20 07:00:00                 9        4999
+     TXN200001      352 2025-12-31 12:00:00 2026-01-11 12:00:00                11        4999
+     TXN200002      353 2026-01-10 14:00:00 2026-01-21 14:00:00                11        1999
+     TXN200004      355 2026-01-05 12:00:00 2026-01-16 12:00:00                11        4999
+     TXN200005      356 2026-01-18 07:00:00 2026-01-29 07:00:00                11        2999
+     TXN200000      351 2026-01-15 06:00:00 2026-01-30 06:00:00                15        1999
+     TXN200011      362 2026-01-08 02:00:00 2026-01-23 02:00:00                15        4999
+     TXN200012      363 2026-01-06 17:00:00 2026-01-23 17:00:00                17         999
+     TXN200013      364 2026-01-04 22:00:00 2026-01-22 22:00:00                18         999
+     TXN200007      358 2026-01-06 05:00:00 2026-01-28 05:00:00                22         999
+     TXN200009      360 2025-12-22 13:00:00 2026-01-13 13:00:00                22        1999
+     TXN200014      365 2025-12-27 21:00:00 2026-01-18 21:00:00                22        1999
+     TXN200003      354 2025-12-29 19:00:00 2026-01-21 19:00:00                23        4999
+
+[15 row(s) returned]
+
+
+==========================================================================================
+
+==========================================================================================
+SELECT user_id,
+       datetime((CAST(strftime('%s', transaction_time) AS INTEGER) / 600) * 600, 'unixepoch') AS window_start,
+       COUNT(*) AS txns_in_window,
+       GROUP_CONCAT(transaction_id) AS transaction_ids
+FROM transactions
+GROUP BY user_id, CAST(strftime('%s', transaction_time) AS INTEGER) / 600
+HAVING COUNT(*) >= 3
+ORDER BY user_id, window_start;
+------------------------------------------------------------------------------------------
+ user_id        window_start  txns_in_window                         transaction_ids
+      59 2026-01-09 21:00:00               4 TXN300024,TXN300025,TXN300026,TXN300027
+      73 2026-01-12 09:00:00               4 TXN300008,TXN300009,TXN300010,TXN300011
+     154 2026-01-02 22:00:00               4 TXN300012,TXN300013,TXN300014,TXN300015
+     200 2026-01-01 22:00:00               4 TXN300020,TXN300021,TXN300022,TXN300023
+     229 2026-01-12 12:00:00               4 TXN300004,TXN300005,TXN300006,TXN300007
+     287 2026-01-14 14:00:00               4 TXN300016,TXN300017,TXN300018,TXN300019
+     314 2026-01-02 18:00:00               4 TXN300000,TXN300001,TXN300002,TXN300003
+     345 2026-01-23 09:00:00               4 TXN300028,TXN300029,TXN300030,TXN300031
+
+[8 row(s) returned]
+
+
+==========================================================================================
+
+==========================================================================================
+SELECT t.user_id,
+       SUM(t.amount_inr) AS total_captured_spend,
+       COUNT(*)          AS captured_txn_count
+FROM transactions t
+WHERE t.status = 'captured'
+GROUP BY t.user_id
+ORDER BY total_captured_spend DESC
+LIMIT 10;
+------------------------------------------------------------------------------------------
+ user_id  total_captured_spend  captured_txn_count
+     149                  7296                   4
+     213                  5946                   4
+     186                  5547                   3
+     216                  5446                   4
+     151                  5048                   2
+      38                  5048                   2
+     293                  4999                   1
+     281                  4999                   1
+     239                  4999                   1
+     208                  4999                   1
+
+[10 row(s) returned]

@@ -1,0 +1,54 @@
+Ledger transactions:  547
+Gateway transactions: 530
+
+1. Missing in gateway export :  27  (4.94% of ledger)
+2. Missing in ledger (extra in gateway):  10  (1.83% of ledger)
+3. Amount mismatches         :  16  (2.93% of ledger)
+4. Status mismatches         :   9  (1.65% of ledger)
+
+--- Sample: missing_in_gateway (first 5) ---
+  transaction_id  user_id  merchant_id    transaction_time  amount_inr payment_method    status  risk_score
+0      TXN100000      350           16 2026-01-29 11:13:00        2999         Wallet  captured          85
+1      TXN100005      196            3 2026-01-06 22:06:00          99            UPI  captured          60
+2      TXN100036      321           16 2026-01-25 16:31:00          49            UPI  captured          35
+3      TXN100044      309           15 2026-01-24 23:34:00          99     Netbanking  captured          62
+4      TXN100056      132           24 2026-01-07 14:44:00         299         Wallet  captured          21
+
+--- Sample: missing_in_ledger (first 5) ---
+  transaction_id  user_id  merchant_id transaction_time  amount_inr payment_method    status  risk_score
+0       TXNX9000      262           25       2026-01-14         149     Netbanking  captured          54
+1       TXNX9001       96           32       2026-01-21        4999         Wallet  captured          71
+2       TXNX9002       86           32       2026-01-10         149         Wallet  captured          40
+3       TXNX9003      231           40       2026-01-02         799            UPI  captured          62
+4       TXNX9004       70           13       2026-01-27        1499     Netbanking  captured          52
+
+--- amount_mismatches (all) ---
+   transaction_id  amount_inr_ledger  amount_inr_gateway  amount_diff
+0       TXN100011               2999                2949          -50
+1       TXN100019                 49                  99           50
+2       TXN100039               1499                1399         -100
+3       TXN100204                 49                 -51         -100
+4       TXN100218                 49                  -1          -50
+5       TXN100252                299                 349           50
+6       TXN100270                799                 899          100
+7       TXN100278                149                  99          -50
+8       TXN100284               1499                1399         -100
+9       TXN100286                 49                 149          100
+10      TXN100301                149                 249          100
+11      TXN100380                149                 249          100
+12      TXN100383                499                 549           50
+13      TXN100393               2999                3099          100
+14      TXN100480                 49                  99           50
+15      TXN100494                 49                 149          100
+
+--- status_mismatches (all) ---
+  transaction_id status_ledger status_gateway
+0      TXN100042      captured         failed
+1      TXN100215      captured         failed
+2      TXN100267      captured         failed
+3      TXN100300      captured         failed
+4      TXN100392      captured         failed
+5      TXN100414      captured         failed
+6      TXN100487      captured         failed
+7      TXN200008    chargeback         failed
+8      TXN300027      captured         failed
